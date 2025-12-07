@@ -1,39 +1,16 @@
 version: '3.8'
 
 services:
-  database:
-    image: mariadb:10.5
-    container_name: observium_db
-    environment:
-      - MYSQL_ROOT_PASSWORD=password
-      - MYSQL_DATABASE=observium
-      - MYSQL_USER=observium
-      - MYSQL_PASSWORD=password
-    volumes:
-      - ./data:/var/lib/mysql
-    restart: unless-stopped
-
   observium:
-    image: uberchuckie/observium:latest
+    image: uberchuckie/observium:latest  # Or specify a tag, e.g., ':11.0.0'
     container_name: observium
-    hostname: observium  # Helps internal container processes
-    environment:
-      - TZ=America/Phoenix               # Updated to your context time
-      - OBSERVIUM_BASE_URL=http://10.1.20.53:8888
-      - OBSERVIUM_ADMIN_USER=admin
-      - OBSERVIUM_ADMIN_PASS=password
-      # Database Connection Details
-      - DB_HOST=database
-      - DB_USER=observium
-      - DB_PASS=password
-      - DB_NAME=observium
-    ports:
-      - "8888:80"       # Web UI
-      - "5144:514/udp"   # Syslog (Standard UDP)
-    volumes:
-      - ./config:/config                # configuration persistence
-      - ./logs:/opt/observium/logs      # Log persistence
-      - ./rrd:/opt/observium/rrd        # RRD (Graph data) persistence
-    depends_on:
-      - database
     restart: unless-stopped
+    user: "99:100"  # Matches the container's internal user/group
+    ports:
+      - "8668:8668"  # Map host port 8668 to container's 8668 (web UI)
+    volumes:
+      - ./config:/config  # Config and embedded DB
+      - ./logs:/opt/observium/logs  # Logs
+      - ./rrd:/opt/observium/rrd  # RRD graphs
+    environment:
+      - TZ=America/Phoenix  # Optional: Replace with your timezone, e.g., 'UTC' or 'Europe/London'
